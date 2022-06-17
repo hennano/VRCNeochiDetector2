@@ -1,8 +1,23 @@
 package net.hennabatch.vrcneochi.parameter
 
-abstract class EXParameter(val name:String, val parameter: Any) {
+import com.illposed.osc.OSCMessage
 
-    fun type():String{
-        return parameter::class.simpleName ?: ""
+class EXParameter<T>(val address: String, val parameter: T){
+
+    companion object{
+        fun <T> byMessage(message: OSCMessage):EXParameter<T>? {
+          val address = message.address
+          val parameter = message.arguments[0] as? T  ?: return null
+          return EXParameter(address, parameter)
+        }
     }
+
+    fun toMessage():OSCMessage{
+        return OSCMessage(address, listOf(parameter))
+    }
+
+    fun update(newParam: T):EXParameter<T> {
+        return EXParameter(address, newParam)
+    }
+
 }

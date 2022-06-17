@@ -4,33 +4,18 @@ import com.illposed.osc.MessageSelector
 import com.illposed.osc.OSCMessageEvent
 import com.illposed.osc.OSCMessageListener
 
-abstract class VRCOSCListener : OSCMessageListener {
-    private val address = "/avatar/parameters/"
+abstract class VRCOSCListener: OSCMessageListener {
 
-    private val selector = object : MessageSelector {
+    val selector = object : MessageSelector {
         override fun isInfoRequired(): Boolean {
             return false
         }
 
-
         override fun matches(messageEvent: OSCMessageEvent?): Boolean {
-            val msgParam = messageEvent?.message?.address ?: return false
-            val exParamName = msgParam.replace(address, "")
-            val regex = Regex(exParam())
-            return regex.matches(exParamName)
+            val msgAddress = messageEvent?.message?.address ?: return false
+            return msgAddress.matches(Regex(exAddress()))
         }
     }
 
-    /**
-     * expressionパラメータ名を指定
-     * 正規表現の使用可
-     */
-    abstract fun exParam():String
-
-    /**
-     * Listener登録時に利用
-     */
-    fun selector(): MessageSelector {
-        return selector
-    }
+    abstract fun exAddress():String
 }
