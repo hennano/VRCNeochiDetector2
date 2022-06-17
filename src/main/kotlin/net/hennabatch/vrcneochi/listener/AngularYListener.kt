@@ -1,25 +1,19 @@
 package net.hennabatch.vrcneochi.listener
 
-import com.illposed.osc.transport.OSCPortOut
-import net.hennabatch.vrcneochi.NeochiDetector
+
 import net.hennabatch.vrcneochi.parameter.VRCParameter
-import java.util.concurrent.LinkedTransferQueue
+import java.util.concurrent.TransferQueue
+import kotlin.math.abs
 
 
-class AngularYListener(val portOut: OSCPortOut) : VRCOSCParameterListener<Float>(){
-
-    val queue = LinkedTransferQueue<Float>()
-    val timer = NeochiDetector(portOut, queue)
+class AngularYListener(val queue: TransferQueue<Float>) : VRCOSCParameterListener<Float>(){
 
     override fun exAddress(): String {
         return "/avatar/parameters/AngularY"
     }
 
     override fun recieveParameter(exParameter: VRCParameter<Float>) {
-        queue.add(exParameter.parameter)
-    }
-
-    fun runTimer(){
-        timer.run()
+        //+のみ送出
+        queue.add(abs(exParameter.parameter))
     }
 }

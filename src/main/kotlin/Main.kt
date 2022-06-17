@@ -1,9 +1,12 @@
 import com.illposed.osc.transport.OSCPortInBuilder
 import com.illposed.osc.transport.OSCPortOut
+import net.hennabatch.vrcneochi.NeochiDetector
 import net.hennabatch.vrcneochi.listener.AngularYListener
+import net.hennabatch.vrcneochi.listener.ResetListener
 import net.hennabatch.vrcneochi.parameter.VRCParameter
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.util.concurrent.LinkedTransferQueue
 
 fun main(args: Array<String>) {
 
@@ -12,19 +15,28 @@ fun main(args: Array<String>) {
 
     val ip = InetAddress.getLoopbackAddress()
 
+    //受信の生成
     val inBuilder = OSCPortInBuilder()
-
     inBuilder.setSocketAddress(InetSocketAddress(ip, inPort))
-
-    val sender = OSCPortOut(InetSocketAddress(ip, outPort))
     val receiver = inBuilder.build()
 
-    val angularYListener = AngularYListener(sender)
+    //送信の生成
+    val sender = OSCPortOut(InetSocketAddress(ip, outPort))
+
+    //タイマー準備
+    val queue = LinkedTransferQueue<Float>()
+    val timer = NeochiDetector(sender, queue)
+
+    //リスナーの生成
+    val angularYListener = AngularYListener(queue)
     receiver.dispatcher.addListener(angularYListener.selector, angularYListener)
+    val resetListener = ResetListener(queue)
+    receiver.dispatcher.addListener(resetListener.selector, resetListener)
 
+    //受信の開始
     receiver.startListening()
-    angularYListener.runTimer()
-
-    Thread.sleep(10000000)
-
+    val timerThread = Thread(timer)
+    //タイマーの開始
+    timerThread.start()
+    timerThread.join()
 }
