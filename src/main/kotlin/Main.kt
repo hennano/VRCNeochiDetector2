@@ -2,6 +2,7 @@ import com.illposed.osc.transport.OSCPortInBuilder
 import com.illposed.osc.transport.OSCPortOut
 import net.hennabatch.vrcneochi.NeochiDetector
 import net.hennabatch.vrcneochi.listener.AngularYListener
+import net.hennabatch.vrcneochi.listener.MuteSelfListener
 import net.hennabatch.vrcneochi.listener.ResetListener
 import net.hennabatch.vrcneochi.parameter.VRCParameter
 import java.net.InetAddress
@@ -24,7 +25,7 @@ fun main(args: Array<String>) {
     val sender = OSCPortOut(InetSocketAddress(ip, outPort))
 
     //タイマー準備
-    val queue = LinkedTransferQueue<Float>()
+    val queue = LinkedTransferQueue<Int>()
     val timer = NeochiDetector(sender, queue)
 
     //リスナーの生成
@@ -32,6 +33,8 @@ fun main(args: Array<String>) {
     receiver.dispatcher.addListener(angularYListener.selector, angularYListener)
     val resetListener = ResetListener(queue)
     receiver.dispatcher.addListener(resetListener.selector, resetListener)
+    val muteSelfListener = MuteSelfListener(queue)
+    receiver.dispatcher.addListener(muteSelfListener.selector, muteSelfListener)
 
     //受信の開始
     receiver.startListening()

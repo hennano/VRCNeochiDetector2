@@ -9,9 +9,12 @@ import java.util.concurrent.TransferQueue
 /**
  * 寝るまでの時間を計測などする
  */
-class NeochiDetector(val portOut: OSCPortOut, private val queue: TransferQueue<Float>, private val min: Int = -(1000 / 50) * 60 * 5 * 2, private val max: Int = (1000 / 50) * 60 * 5 * 1) : Runnable{
+class NeochiDetector(val portOut: OSCPortOut, private val queue: TransferQueue<Int>, private val min: Int = -500, private val max: Int = (1000 / 50) * 60 * 5 * 10) : Runnable{
 
     private var remaining = max
+
+    private var isAutoMute = false
+
 
     var isSleeping = false
 
@@ -19,17 +22,24 @@ class NeochiDetector(val portOut: OSCPortOut, private val queue: TransferQueue<F
         while (true){
             val time = queue.poll(50, TimeUnit.MILLISECONDS)
             if(time != null){
-                if(time < 0){
-                    //-以下が送られたときはリセット
-                    remaining = max
-                    turnOFFReset()
-                }else{
-                    //+は追加
-                    remaining += Math.min(time.toInt() / 10, 50)
+                when (time){
+                    -1 ->{
+                        //残り時間のリセット
+                        remaining = max
+                        turnOFFReset()
+                    }
+                    -2 ->{
+                        //MuteSelfがtrue
+                        if(!isSleeping && isAutoMute) toggleMute() else isAutoMute = false
+                    }
+                    -3 ->{
+                        //MuteSelfがfalse
+                        if(isSleeping && isAutoMute) toggleMute() else isAutoMute = false
+                    }
+                    else -> remaining += Math.min(time / 10, 50)
                 }
             }
             remaining = Math.min(max, Math.max(min, remaining - 5))
-            logger.debug("$remaining")
 
             if(remaining < 0 && !isSleeping){
                 //寝たとき
@@ -53,11 +63,25 @@ class NeochiDetector(val portOut: OSCPortOut, private val queue: TransferQueue<F
     fun sendSleeping(){
         logger.info("sleeping")
         portOut.send(VRCParameter("/avatar/parameters/isSleeping", true).toMessage())
+        toggleMute()
     }
 
     //起きた状態にする
     fun sendWakeUp(){
         logger.info("wake up")
         portOut.send(VRCParameter("/avatar/parameters/isSleeping", false).toMessage())
+        toggleMute()
+    }
+
+    //ボイスのボタンを押す
+    fun toggleMute(){
+        logger.info("toggleMute")
+        val voiceAddress = "/input/Voice"
+        isAutoMute = true
+        portOut.send(VRCParameter(voiceAddress, 0).toMessage())
+        Thread.sleep(10)
+        portOut.send(VRCParameter(voiceAddress, 1).toMessage())
+        Thread.sleep(10)
+        portOut.send(VRCParameter(voiceAddress, 0).toMessage())
     }
 }

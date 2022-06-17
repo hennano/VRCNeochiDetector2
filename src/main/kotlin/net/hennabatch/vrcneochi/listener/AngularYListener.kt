@@ -6,7 +6,7 @@ import java.util.concurrent.TransferQueue
 import kotlin.math.abs
 
 
-class AngularYListener(val queue: TransferQueue<Float>) : VRCOSCParameterListener<Float>(){
+class AngularYListener(val queue: TransferQueue<Int>) : VRCOSCParameterListener<Float>(){
 
     override fun exAddress(): String {
         return "/avatar/parameters/AngularY"
@@ -14,6 +14,6 @@ class AngularYListener(val queue: TransferQueue<Float>) : VRCOSCParameterListene
 
     override fun recieveParameter(exParameter: VRCParameter<Float>) {
         //+のみ送出
-        queue.add(abs(exParameter.parameter))
+        queue.add(abs(exParameter.parameter.toInt()))
     }
 }
