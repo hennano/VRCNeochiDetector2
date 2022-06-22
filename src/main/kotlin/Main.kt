@@ -4,6 +4,7 @@ import net.hennabatch.vrcneochi.neochi.NeochiDetector
 import net.hennabatch.vrcneochi.listener.AngularYListener
 import net.hennabatch.vrcneochi.listener.MuteSelfListener
 import net.hennabatch.vrcneochi.listener.ResetListener
+import net.hennabatch.vrcneochi.listener.VelocityListener
 import net.hennabatch.vrcneochi.neochi.NeochiPacket
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -36,6 +37,8 @@ fun main(args: Array<String>) {
     receiver.dispatcher.addListener(resetListener.selector, resetListener)
     val muteSelfListener = MuteSelfListener(queue)
     receiver.dispatcher.addListener(muteSelfListener.selector, muteSelfListener)
+    val velocityListener = VelocityListener(queue)
+    receiver.dispatcher.addListener(velocityListener.selector, velocityListener)
 
     //受信の開始
     receiver.startListening()
