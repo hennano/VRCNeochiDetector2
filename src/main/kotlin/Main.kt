@@ -1,15 +1,16 @@
 import com.illposed.osc.transport.OSCPortInBuilder
 import com.illposed.osc.transport.OSCPortOut
-import net.hennabatch.vrcneochi.NeochiDetector
+import net.hennabatch.vrcneochi.neochi.NeochiDetector
 import net.hennabatch.vrcneochi.listener.AngularYListener
 import net.hennabatch.vrcneochi.listener.MuteSelfListener
 import net.hennabatch.vrcneochi.listener.ResetListener
-import net.hennabatch.vrcneochi.parameter.VRCParameter
+import net.hennabatch.vrcneochi.neochi.NeochiPacket
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.util.concurrent.LinkedTransferQueue
 
 fun main(args: Array<String>) {
+    println("start")
 
     val inPort = 9001
     val outPort = 9000
@@ -25,7 +26,7 @@ fun main(args: Array<String>) {
     val sender = OSCPortOut(InetSocketAddress(ip, outPort))
 
     //タイマー準備
-    val queue = LinkedTransferQueue<Int>()
+    val queue = LinkedTransferQueue<NeochiPacket>()
     val timer = NeochiDetector(sender, queue)
 
     //リスナーの生成

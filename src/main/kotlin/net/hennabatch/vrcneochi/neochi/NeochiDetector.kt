@@ -1,7 +1,8 @@
-package net.hennabatch.vrcneochi
+package net.hennabatch.vrcneochi.neochi
 
 import com.illposed.osc.transport.OSCPortOut
 import net.hennabatch.vrcneochi.logger.logger
+import net.hennabatch.vrcneochi.neochi.NeochiPacket
 import net.hennabatch.vrcneochi.parameter.VRCParameter
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TransferQueue
@@ -9,36 +10,36 @@ import java.util.concurrent.TransferQueue
 /**
  * 寝るまでの時間を計測などする
  */
-class NeochiDetector(val portOut: OSCPortOut, private val queue: TransferQueue<Int>, private val min: Int = -500, private val max: Int = (1000 / 50) * 60 * 5 * 10) : Runnable{
+class NeochiDetector(val portOut: OSCPortOut, private val queue: TransferQueue<NeochiPacket>, private val min: Int = -300, private val max: Int = (1000 / 50) * 60 * 5 * 10) : Runnable{
 
     private var remaining = max
 
     private var isAutoMute = false
 
-
     var isSleeping = false
 
     override fun run() {
         while (true){
-            val time = queue.poll(50, TimeUnit.MILLISECONDS)
-            if(time != null){
-                when (time){
-                    -1 ->{
+            val packet = queue.poll(50, TimeUnit.MILLISECONDS)
+            if(packet != null){
+                when (packet.type){
+                    NeochiPacket.Type.RESET ->{
                         //残り時間のリセット
                         remaining = max
                         turnOFFReset()
                     }
-                    -2 ->{
+                    NeochiPacket.Type.MUTE ->{
                         //MuteSelfがtrue
                         if(!isSleeping && isAutoMute) toggleMute() else isAutoMute = false
                     }
-                    -3 ->{
+                    NeochiPacket.Type.UNMUTE ->{
                         //MuteSelfがfalse
                         if(isSleeping && isAutoMute) toggleMute() else isAutoMute = false
                     }
-                    else -> remaining += Math.min(time / 10, 50)
+                    else -> remaining += Math.min(packet.param / 10, 50)
                 }
             }
+
             remaining = Math.min(max, Math.max(min, remaining - 5))
 
             if(remaining < 0 && !isSleeping){
